@@ -182,3 +182,7 @@ function labelTransformFn(label) {
 
 # Q Integration
 For those of you who would like to interface with the monetdb-import module through using promises: we did you a solid. The asynchronous methods in the Importer object ([Importer.sniff](#sniff) and [Importer.import](#import)) have promise-returning variants: Importer.sniffQ and Importer.importQ.
+
+
+
+### Please report any suggestions/bugs to robin.cijvat@monetdbsolutions.com
