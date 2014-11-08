@@ -185,4 +185,4 @@ For those of you who would like to interface with the monetdb-import module thro
 
 
 
-### Please report any suggestions/bugs to robin.cijvat@monetdbsolutions.com
+### Using this module should be a summer breeze. Don't agree? Please report any suggestions/bugs to robin.cijvat@monetdbsolutions.com

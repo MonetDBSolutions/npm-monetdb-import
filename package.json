@@ -13,7 +13,10 @@
     "import",
     "csv"
   ],
-  "author": "R. Cijvat",
+   "author": {
+    "name": "R. Cijvat",
+    "email": "robin.cijvat@monetdbsolutions.com"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/MonetDB/npm-monetdb-import/issues"

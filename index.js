@@ -55,6 +55,7 @@ module.exports = function() {
 
 		// private variables
 		var _conn = null;
+		var _closeConn = false; // set to true if we create a connection ourselves
 		var _filepath = filepath;
 		var _schemaname = schemaname;
 		var _tablename = tablename;
@@ -253,6 +254,10 @@ module.exports = function() {
 				fn && fn(null);
 			}, function(err) { 
 				fn && fn("Import failed. Reason: "+err);
+			}).fin(function() {
+				if(_closeConn) {
+					_conn.close();
+				}
 			}).done();
 		}
 
@@ -288,6 +293,7 @@ module.exports = function() {
 		if(dbOptions.conn) {
 			_conn = dbOptions.conn;
 		} else {
+			_closeConn = true; // indicate that the connection should be closed afterwards
 			_conn = MonetDB.connect(dbOptions, function(err) {
 				if(err) {
 					throw new Error("Could not create a connection to the database: "+err);
