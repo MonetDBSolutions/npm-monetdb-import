@@ -5,7 +5,7 @@ If you want to import data with [MonetDB](https://www.monetdb.org), then the [bu
 
 This module has been designed to do all of this for you. It is able to do this by using the [csv-sniffer](https://www.npmjs.org/package/csv-sniffer) module. Furthermore, it uses the [MonetDB connector for NodeJS](https://www.npmjs.org/package/monetdb) to interact with your database.
 
-The **monetdb-import** module takes your plain text file (binaries not supported), figures out its details, creates appropriate storage for it inside your [MonetDB](https://www.monetdb.org) database and then imports it in there. It literally does **everything**. It is similar to the [Python MonetDB importer](http://homepages.cwi.nl/~hannes/importer.py), but then written in NodeJS, and with more flexibility in terms of specifying the import parameters.
+The **monetdb-import** module takes a delimited text file (binaries not supported), figures out its details, creates appropriate storage for it inside your [MonetDB](https://www.monetdb.org) database and then imports it in there. It literally does **everything**. It is similar to the [Python MonetDB importer](http://homepages.cwi.nl/~hannes/importer.py), but then written in NodeJS, and with more flexibility in terms of specifying the import parameters.
 
 # Installation
 npm install [-g] monetdb-import
@@ -97,7 +97,7 @@ In case the 'conn' property is missing, we will instantiate a MonetDBConnection 
 	- maxRecords [integer]: The maximum number of record arrays that will be stored in the [fileStats](#sniff) object(default: 10).
 	- maxCharsInRecords [integer]: The maximum total number of characters that will be copied over to the records array (default: 2048).
 	If the importOptions object is omitted entirely, all defaults will be assumed.
-- filepath [string]: The path of the file that will be added to the database. Note that this import module only handles plain text files, no binaries.
+- filepath [string]: The path of the file that will be added to the database. Note that this import module only handles delimited text files, no binaries.
 - schemaname [string]: The name of the [schema](https://www.monetdb.org/Documentation/SQLreference/Schema) to which the file table will be added. Note that importing will fail if the schema does not exist. (default: sys).
 - tablename [string]: The name of the table that will be created in [MonetDB](https://www.monetdb.org) to hold the contents of the given file. Note that importing will fail if the table already exists. 
 - delimiters [array]: Array that represents a set of strings that are possible column delimiters. This
