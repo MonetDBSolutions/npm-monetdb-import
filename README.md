@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/MonetDB/npm-monetdb-import.svg)](https://travis-ci.org/MonetDB/npm-monetdb-import)
 [![npm version](https://badge.fury.io/js/monetdb-import.svg)](http://badge.fury.io/js/monetdb-import)
 
-If you are looking for an easy way to import data into [MonetDB](https://www.monetdb.org), then you are on the right track!
+This module provides an easy API for loading data files into [MonetDB](https://www.monetdb.org).
 
 If you want to import data with [MonetDB](https://www.monetdb.org), then the [bulk input](https://www.monetdb.org/Documentation/Manuals/SQLreference/CopyInto) normally is the way to go. This however requires you to know what your data files look like. You have to know the delimiters, newline characters, quote characters, the number of lines in the file, whether or not header labels can be found on the first row, and so on. That can be quite annoying.
 
