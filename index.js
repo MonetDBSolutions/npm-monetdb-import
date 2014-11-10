@@ -66,12 +66,11 @@ module.exports = function() {
 		};
 		var _labelTransformFn = function(label) {
 			return label.toLowerCase()
-					.replace(" ", "_")
-					.replace("'", "")
-					.replace('"', "")
-					.replace("\t", "  ")
-					.replace("\n", " | ")
-					.replace("\r", "");
+					.replace(/\s/g, "_")
+					.replace(/'/g, "")
+					.replace(/"/g, "")
+					.replace(/\n/g, " | ")
+					.replace(/\r/g, "");
 		};
 		var _sqlLogFn = console.log;
 		var _sniffer = new CSVSniffer(delimiters);
