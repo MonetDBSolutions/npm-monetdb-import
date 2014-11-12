@@ -1,7 +1,6 @@
 var fs = require("fs");
 
 var q = require("q");
-var csvParse = require("csv-parse");
 var MonetDB = require("monetdb");
 var CSVSniffer = require("csv-sniffer")();
 
@@ -60,7 +59,6 @@ module.exports = function() {
 		var _schemaname = schemaname;
 		var _tablename = tablename;
 		var _importOptions = importOptions;
-		var _parseOptions = null;
 		var _labelFn = function(i) {
 			return "C"+i;
 		};
@@ -88,7 +86,10 @@ module.exports = function() {
 			}
 			return q.nfcall(fs.stat, _filepath).then(function(stat) {
 				return q.nfcall(fs.open, _filepath, "r").then(function(fd) {
-					var bytesToRead = Math.min(_importOptions.sampleSize, stat.size);
+					var bytesToRead = stat.size;
+					if(_importOptions.sampleSize > 0 && _importOptions.sampleSize < stat.size) {
+						bytesToRead = _importOptions.sampleSize;
+					}
 					var buf = new Buffer(bytesToRead);
 					return q.nfcall(fs.read, fd, buf, 0, bytesToRead, 0).then(function(bytesRead) {
 						_sample = buf.toString();
@@ -114,91 +115,60 @@ module.exports = function() {
 				fn = sniffOptions;
 				var sniffOptions = null;
 			}
-
 			__typeCheck("object", sniffOptions, true);
 			__typeCheck("function", fn);
 
 			_getSample().then(function(sample) {
 				try {
 					var sniffResult = _sniffer.sniff(sample, sniffOptions);
+					// sniffResult calculated... make sure labels are appropriate for insertion in the database
+					if(sniffResult.labels) {
+						sniffResult.labels = sniffResult.labels.map(_labelTransformFn);
+					} else if(sniffResult.records) {
+						// if the file does not contain a header, we generate one ourselves
+						sniffResult.labels = [];
 
-					// sniffResult calculated... calculate fileStats
-					var fileStats = {};
-					_parseOptions.delimiter = sniffResult.delimiter;
-					_parseOptions.rowDelimiter = sniffResult.newlineStr;
-					_parseOptions.quote = sniffResult.quoteChar;
-
-					q.nfcall(csvParse, sample.substring(0, _importOptions.maxCharsInRecords), _parseOptions).then(function(records) {
-						fileStats.labels = sniffResult.hasHeader ? records.slice(0, 1) : null;
-						fileStats.records = sniffResult.hasHeader ? 
-												records.slice(1, _importOptions.maxRecords+1) : 
-												records.slice(0, _importOptions.maxRecords);
-
-						if(fileStats.labels && fileStats.labels.length > 0) {
-							fileStats.labels = fileStats.labels[0].map(_labelTransformFn);
-						} else {
-							// if the file does not contain a header, we generate one ourselves
-							fileStats.labels = [];
-
-							// first, find the # of columns that occurs the most in the parse result
-							var colCountOccurrences = [];
-							records.forEach(function(row) {
-								if(!colCountOccurrences[row.length]) {
-									colCountOccurrences[row.length] = 1;
-								} else {
-									++colCountOccurrences[row.length];
-								}
-							});
-							var nrCols = -1;
-							Object.keys(colCountOccurrences).forEach(function(d) {
-								nrCols = Math.max(nrCols, parseInt(d));
-							});
-
-							// generate list of headers for this nr of cols
-							for(var i=1; i<=nrCols; ++i) {
-								fileStats.labels.push(_labelFn(i));
+						// first, find the # of columns that occurs the most in the parse result
+						var colCountOccurrences = [];
+						sniffResult.records.forEach(function(cols) {
+							if(!colCountOccurrences[cols.length]) {
+								colCountOccurrences[cols.length] = 1;
+							} else {
+								++colCountOccurrences[cols.length];
 							}
-						}
-
-						// count the number of lines in the file, resolve/reject when this completes
-						var deferred = q.defer();
-						fileStats.nrLines = 1; // file always has one line, even if it is completely empty
-						fs.createReadStream(_filepath).on("data", function(chunk) {
-							var matches = chunk.toString().match(new RegExp(sniffResult.newlineStr, "g")) || [];
-							fileStats.nrLines += matches.length;
-						}).on("end", function() {
-							deferred.resolve();
-						}).on("error", function(err) {
-							// Error while reading file... 
-							deferred.reject(err);
 						});
-						return deferred.promise;
-					}).then(function() {
-						// Successfully calculated filestats, pass result back to callback function
-						fn(null, { sniffResult: sniffResult, fileStats: fileStats });
-					}, function(err) {
-						fn("Could not calculate file stats of "+_filepath+" ("+err+")");
-					}).done();
+						var nrCols = -1;
+						Object.keys(colCountOccurrences).forEach(function(d) {
+							nrCols = Math.max(nrCols, parseInt(d));
+						});
 
+						// generate list of headers for this nr of cols
+						for(var i=1; i<=nrCols; ++i) {
+							sniffResult.labels.push(_labelFn(i));
+						}
+					} else {
+						sniffResult.labels = [];
+					}
+					fn(null, sniffResult);
 				} catch(err) {
-					fn("Failed to sniff file stats of "+_filepath+" ("+err+")");
+					fn("Failed to sniff file "+_filepath+" ("+err+")");
 				}
 			}, function(err) {
 				fn("Could not sample file "+_filepath+" ("+err+")")
-			})
+			});
 		}
 
-		this.import = function(sniffData, fn) {
+		this.import = function(sniffResult, fn) {
 			// Check arguments and shift if necessary
-			if(typeof(sniffData) != "object") {
-				fn = sniffData;
-				var sniffData = null;
+			if(typeof(sniffResult) != "object") {
+				fn = sniffResult;
+				var sniffResult = null;
 			}
-			__typeCheck("object", sniffData, true);
+			__typeCheck("object", sniffResult, true);
 			__typeCheck("function", fn);
 
-			if(!sniffData) {
-				sniffData = that.sniffQ();
+			if(!sniffResult) {
+				sniffResult = that.sniffQ();
 			}
 
 			var databaseCheckPromise = _query("SELECT COUNT(*) FROM "+_getTablename()).then(function() {
@@ -209,66 +179,79 @@ module.exports = function() {
 				return true;
 			});
 
+			var nrLines; // will be filled in on promise resolve
+
 			q.spread([
-				q.when(sniffData),
-				_getSample(),
+				q.when(sniffResult),
 				databaseCheckPromise
-			], function(sniffData, sample) {
+			], function(sniffR) {
+				sniffResult = sniffR; //Store globally so we don't have to pass it on to next promises
+
+				// We have the sniffresult, now create a table to store the file in, and 
+				// count the number of new lines in the input file so we can obtain an
+				// upper bound on the number of records.
+
 				// Try to create a table that can be used to store the file
-				var labelsQuoted = sniffData.fileStats.labels.map(function(label) {
+				var labelsQuoted = sniffResult.labels.map(function(label) {
 					return '"'+label.replace('"', "")+'"';
 				});
-				return _query(
+				var createTablePromise = _query(
 					"CREATE TABLE "+_getTablename()+" ("+
 						labelsQuoted.map(function(col, i) { 
-							return col+" "+__typeToDbType(sniffData.sniffResult.types[i]); 
+							return col+" "+__typeToDbType(sniffResult.types[i]); 
 						}).join(",\n")+
 					")"
-				).then(function() {
-					return sniffData;
-				}, function(err) { 
+				).fail(function(err) {
 					throw new Error("Could not create database table "+_getTablename()+" ("+err+")");
 				});
-			}).then(function(sniffData) {
-				// Table is in place; we can now do the actual import
-				var offset = sniffData.sniffResult.hasHeader?"2":"1";
+
+				// count the number of lines in the file, resolve/reject when this completes
+				var nrLinesPromise = q.defer();
+				nrLines = 1; // file always has one line, even if it is completely empty
+				fs.createReadStream(_filepath).on("data", function(chunk) {
+					var matches = chunk.toString().match(new RegExp(sniffResult.newlineStr, "g")) || [];
+					nrLines += matches.length;
+				}).on("end", function() {
+					nrLinesPromise.resolve();
+				}).on("error", function(err) {
+					// Error while reading file... 
+					nrLinesPromise.reject(err);
+				});
+
+				return q.all([
+					createTablePromise,
+					nrLinesPromise.promise
+				]);
+			}).then(function() {
+				// Table is in place and we have an upper bound on the nr of lines; we can now do the actual import
+				var offset = sniffResult.hasHeader?"2":"1";
 				var delimiterStr = null;
-				if(sniffData.sniffResult.delimiter) {
-					delimiterStr = "'"+sniffData.sniffResult.delimiter+"'";
-					if(sniffData.sniffResult.newlineStr) {
-						delimiterStr += ", '"+sniffData.sniffResult.newlineStr+"'";
-						if(sniffData.sniffResult.quoteChar) {
-							delimiterStr += ", '"+sniffData.sniffResult.quoteChar+"'";
+				if(sniffResult.delimiter) {
+					delimiterStr = "'"+sniffResult.delimiter+"'";
+					if(sniffResult.newlineStr) {
+						delimiterStr += ", '"+sniffResult.newlineStr.replace("\r", "\\r").replace("\n", "\\n")+"'";
+						if(sniffResult.quoteChar) {
+							delimiterStr += ", '"+sniffResult.quoteChar+"'";
 						}
 					}
 				}
-				return _query( // Note: nrLines > actual nr of records in input, but this is ok since MonetDB only expects an upper bound.
-					"COPY "+sniffData.fileStats.nrLines+" OFFSET "+offset+" RECORDS \n"+
+				return _query( // Note: nrLines >= actual nr of records in input, but this is ok since MonetDB only expects an upper bound.
+					"COPY "+nrLines+" OFFSET "+offset+" RECORDS \n"+
 					"INTO "+_getTablename()+" \n"+
-					"FROM ('"+_filepath+"') "+
+					"FROM ('"+_filepath+"') \n"+
 					(delimiterStr ? "DELIMITERS "+delimiterStr+"\n" : "")+
-					"LOCKED");
+					"NULL AS '' LOCKED");
 			}).then(function() {
 				// Import successful! 
 				fn && fn(null);
-			}, function(err) { 
+			}, function(err) {
+				_query("DROP TABLE "+_getTablename());
 				fn && fn("Import failed. Reason: "+err);
 			}).fin(function() {
 				if(_closeConn) {
 					_conn.close();
 				}
 			}).done();
-		}
-
-
-		this.setParseOptions = function(parseOptions) {
-			__typeCheck("object", parseOptions, true);
-			var opt = parseOptions ? parseOptions : {};
-			if(!opt.escape) 						opt.escape = '\\';
-			if(!opt.comment) 						opt.comment = null;
-			if(opt.skip_empty_lines === undefined)  opt.skip_empty_lines = true;
-			if(opt.auto_parse === undefined) 		opt.auto_parse = false;
-			_parseOptions = opt;
 		}
 
 		this.setLabelFn = function(fn) {
@@ -304,11 +287,7 @@ module.exports = function() {
 		}
 
 		// initialize default options
-		if(!_importOptions.sampleSize) 			_importOptions.sampleSize = 131072;
-		if(!_importOptions.maxRecords) 			_importOptions.maxRecords = 10;
-		if(!_importOptions.maxCharsInRecords)  	_importOptions.maxCharsInRecords = 2048;
-
-		this.setParseOptions(null);
+		if(!_importOptions.sampleSize) 			_importOptions.sampleSize = 0;
 	}
 
 	// Q Integration

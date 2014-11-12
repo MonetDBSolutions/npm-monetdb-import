@@ -1,6 +1,6 @@
 {
   "name": "monetdb-import",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "MonetDB data import made easy and interactive.",
   "main": "index.js",
   "repository": {
@@ -24,6 +24,6 @@
   "dependencies": {
     "monetdb": "~0.2.1",
     "q": "~1.0.1",
-    "csv-sniffer": "0.0.2"
+    "csv-sniffer": "0.0.3"
   }
 }
