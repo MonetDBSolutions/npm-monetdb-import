@@ -1,6 +1,6 @@
 {
   "name": "monetdb-import",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "MonetDB data import made easy and interactive.",
   "main": "index.js",
   "repository": {

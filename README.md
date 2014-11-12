@@ -35,9 +35,9 @@ var dbOptions = {
 	dbname: 'demo'
 }
 
-var imp = new [Importer](#importer)(dbOptions, '/path/to/my/file', 'fancy_table_name');
+var imp = new Importer(dbOptions, '/path/to/my/file', 'fancy_table_name');
 
-imp.[import](#import)(function(err) {
+imp.import(function(err) {
 	if(err) {
 		console.log('Could not import file /path/to/my/file; Reason: '+err);
 	}
@@ -57,10 +57,10 @@ var dbOptions = {
 	dbname: 'demo',
 }
 
-var imp = new [Importer](#importer)(dbOptions, '/path/to/my/file', 'fancy_table_name');
+var imp = new Importer(dbOptions, '/path/to/my/file', 'fancy_table_name');
 
 var sniffOptions = { /* Some optional initial sniffing options */ }
-imp.[sniff](#sniff)(sniffOptions, function(err, sniffResult) {
+imp.sniff(sniffOptions, function(err, sniffResult) {
 	if(err) throw new Error(err);
 
 	// Investigate sniffResult here...
@@ -70,12 +70,12 @@ imp.[sniff](#sniff)(sniffOptions, function(err, sniffResult) {
 
 	sniffOptions.delimiter = '\t'; // just an example
 
-	imp.[sniff](#sniff)(sniffOptions, function(err, sniffResult) {
+	imp.sniff(sniffOptions, function(err, sniffResult) {
 		if(err) throw new Error(err);
 
 		// Let's assume that we are happy with the sniff result now
 		// We can then finish the import process
-		imp.[import](#import)(sniffResult, function(err) {
+		imp.import(sniffResult, function(err) {
 			if(err) {
 				console.log('Could not import file /path/to/my/file; Reason: '+err);
 			}
@@ -97,7 +97,7 @@ Constructor for an Importer object.
 In case the 'conn' property is missing, we will instantiate a MonetDBConnection object ourselves and we expect the dbOptions object to contain the properties needed to do so. These properties are given on the module page of the [monetdb module](https://www.npmjs.org/package/monetdb#connect).
 - importOptions [object]: Optional object containing the following optional properties:
 	- sampleSize [integer]: The maximum number of bytes to read from the import file for the sniffing process. If it is set to <= 0, the whole file contents will be read and fed to the sniffer. This might not be what you want for big files, since the sniffing process can be quite memory intensive. (default: 0 (so by default reads your entire file)).
-	If the importOptions object is omitted entirely, all defaults will be assumed.
+  If the importOptions object is omitted entirely, all defaults will be assumed.
 - filepath [string]: The path of the file that will be added to the database. Note that this import module only handles delimited text files, no binaries.
 - schemaname [string]: The name of the [schema](https://www.monetdb.org/Documentation/SQLreference/Schema) to which the file table will be added. Note that importing will fail if the schema does not exist. (default: sys).
 - tablename [string]: The name of the table that will be created in [MonetDB](https://www.monetdb.org) to hold the contents of the given file. Note that importing will fail if the table already exists. 
