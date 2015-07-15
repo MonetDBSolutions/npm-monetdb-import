@@ -36,13 +36,13 @@ module.exports = function() {
 			tablename = schemaname;
 			schemaname = filepath;
 			filepath = importOptions;
-			var importOptions = {};
+			importOptions = {};
 		}
 		// Shift if schemaname is missing
 		if(typeof(tablename) != "string") {
 			delimiters = tablename;
 			tablename = schemaname;
-			var schemaname = "sys";
+			schemaname = "sys";
 		}
 
 		__typeCheck("object", dbOptions);
@@ -60,7 +60,7 @@ module.exports = function() {
 		var _tablename = tablename;
 		var _importOptions = importOptions;
 		var _labelFn = function(i) {
-			return "C"+i;
+			return "c"+i;
 		};
 		var _labelTransformFn = function(label) {
 			return label.toLowerCase()
@@ -113,7 +113,7 @@ module.exports = function() {
 			if(typeof(sniffOptions) != "object") {
 				// optional sniffOptions not provided, shift parameters
 				fn = sniffOptions;
-				var sniffOptions = null;
+				sniffOptions = null;
 			}
 			__typeCheck("object", sniffOptions, true);
 			__typeCheck("function", fn);
@@ -156,13 +156,13 @@ module.exports = function() {
 			}, function(err) {
 				fn("Could not sample file "+_filepath+" ("+err+")")
 			});
-		}
+		};
 
 		this.import = function(sniffResult, fn) {
 			// Check arguments and shift if necessary
 			if(typeof(sniffResult) != "object") {
 				fn = sniffResult;
-				var sniffResult = null;
+				sniffResult = null;
 			}
 			__typeCheck("object", sniffResult, true);
 			__typeCheck("function", fn);
@@ -191,8 +191,30 @@ module.exports = function() {
 				// count the number of new lines in the input file so we can obtain an
 				// upper bound on the number of records.
 
+                // Transform labels and replace empty labels with labels created with the labelFn
+                // Store in new var labels
+                var labels = sniffResult.labels.map(function(label, i) {
+                    var transformed = _labelTransformFn(label).trim();
+                    return transformed.length ? transformed : _labelFn(i+1);
+                });
+
+                // Create dictionary that remembers for each label how many times it occurs, so we can
+                // change names to avoid duplicates
+                var labelDict = {};
+                labels.forEach(function(label, i) {
+                    var count = labelDict[label];
+                    if(count === undefined) {
+                        count = labelDict[label] = 0;
+                    } else {
+                        labels[i] += "(" + count + ")";
+                    }
+                    labelDict[label] = ++count;
+                });
+
+                console.log(labels);
+
 				// Try to create a table that can be used to store the file
-				var labelsQuoted = sniffResult.labels.map(function(label) {
+				var labelsQuoted = labels.map(function(label) {
 					return '"'+label.replace('"', "")+'"';
 				});
 				var createTablePromise = _query(
@@ -252,22 +274,22 @@ module.exports = function() {
 					_conn.close();
 				}
 			}).done();
-		}
+		};
 
 		this.setLabelFn = function(fn) {
 			__typeCheck("function", fn);
 			_labelFn = fn;
-		}
+		};
 
 		this.setLabelTransformFn = function(fn) {
 			__typeCheck("function", fn);
 			_labelTransformFn = fn;
-		}
+		};
 
 		this.setSqlLogFn = function(fn) {
 			__typeCheck("function", fn, true);
 			_sqlLogFn = fn;
-		}
+		};
 
 
 
