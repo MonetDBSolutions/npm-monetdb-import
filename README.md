@@ -119,6 +119,25 @@ This method does the actual import process.
 - fn [function]: This callback function gets called when the import completes. If import failed, an error message will be provided as the first argument. On success, this argument will be set to null. If this argument is omitted or set to null, no one will be notified when the import completes.
 
 
+#### <a name="prepareLabels"></a>Importer.prepareLabels(sniffResult, [options]):
+This is a *STATIC* method, meaning that you can call this method on the Importer constructor without having to create an
+Importer object first. It is used from within every Importer object to transform the labels in the [csv-sniffer sniffresult](https://www.npmjs.org/package/csv-sniffer#sniffresult) into an array of column names suitable for insertion into MonetDB. 
+- sniffResult [object]: Object that obeys the conventions of the output of the [csv-sniffer sniffresult](https://www.npmjs.org/package/csv-sniffer#sniffresult)
+- options [object]: Optional options object
+	- labelFn [function]: The function to use to construct a label out of an index (see [setLabelFn](#setLabelFn) for more details)
+	- labelTransformFn [function]: The function to use to transform a label into a format suitable for MonetDB (see [setLabelTransformFn](#setLabelTransformFn) for more details)
+
+The function performs the following operations:
+- Use the records array in the sniff result to determine the max number of columns in any row
+- Extend the labels array to include enough values for the col max found in the previous step,
+  by using the [label fn](#setLabelFn)
+- Apply [label transform fn](#setLabelTransformFn) to all labels
+- Replace any empty values with a label generated with the label fn
+- Extend any duplicate values with '{{value}}(i)'
+
+
+
+
 
 ### Advanced configuration
 The default configuration will in most cases be sufficient. If it is not, you can use the following methods to have full control over the import process.
