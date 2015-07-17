@@ -308,7 +308,7 @@ module.exports = function() {
         }
         if(!sniffResult.labels) sniffResult.labels = [];
         for(var i=0; i<nrCols; ++i) {
-            if (typeof(sniffResult.labels[i] != "string")) {
+            if (typeof(sniffResult.labels[i]) != "string") {
                 sniffResult.labels[i] = opts.labelFn((i + 1));
             }
         }
@@ -316,7 +316,7 @@ module.exports = function() {
         // Transform labels and replace empty labels with labels created with the labelFn
         sniffResult.labels = sniffResult.labels.map(function(label, i) {
             var transformed = opts.labelTransformFn(label).trim();
-            return transformed.length ? transformed : opts.labelFn(i+1);
+            return transformed.length ? transformed : opts.labelFn(i + 1);
         });
 
         // Duplicate elimination
