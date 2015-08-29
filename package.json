@@ -1,6 +1,6 @@
 {
   "name": "monetdb-import",
-  "version": "0.1.2",
+  "version": "0.2.2",
   "description": "MonetDB data import made easy and interactive.",
   "main": "index.js",
   "repository": {
@@ -22,16 +22,17 @@
     "url": "https://github.com/MonetDB/npm-monetdb-import/issues"
   },
   "dependencies": {
+    "csv-parse": "^1.0.0",
+    "csv-sniffer": "latest",
     "monetdb": "~0.2.1",
-    "q": "~1.0.1",
-    "csv-sniffer": "latest"
+    "q": "~1.0.1"
   },
   "gitHead": "5c210d3c2cb115acb0938706e58368bd6f4fc1e7",
   "homepage": "https://github.com/MonetDB/npm-monetdb-import#readme",
-  "_id": "monetdb-import@0.1.1",
+  "_id": "monetdb-import@0.1.2",
   "scripts": {},
-  "_shasum": "0e0adcbfe6fa9375582d744385d527d82db3801a",
-  "_from": "monetdb-import@0.1.1",
+  "_shasum": "e0a223573dd4b181e5ba1e9460ddc1691a32c2b2",
+  "_from": "monetdb-import@latest",
   "_npmVersion": "2.12.0",
   "_nodeVersion": "0.10.25",
   "_npmUser": {

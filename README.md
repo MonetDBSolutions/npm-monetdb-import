@@ -97,6 +97,8 @@ Constructor for an Importer object.
 In case the 'conn' property is missing, we will instantiate a MonetDBConnection object ourselves and we expect the dbOptions object to contain the properties needed to do so. These properties are given on the module page of the [monetdb module](https://www.npmjs.org/package/monetdb#connect).
 - importOptions [object]: Optional object containing the following optional properties:
 	- sampleSize [integer]: The maximum number of bytes to read from the import file for the sniffing process. If it is set to <= 0, the whole file contents will be read and fed to the sniffer. This might not be what you want for big files, since the sniffing process can be quite memory intensive. (default: 0 (so by default reads your entire file)).
+	- locked [boolean]: If set to true, the LOCKED keyword will be added to the [COPY INTO statement](https://www.monetdb.org/Documentation/Manuals/SQLreference/CopyInto) (default: true).
+    - nullString [string]: If a value is found in your file that equals this string, it is considered as NULL. (Note that you should omit single quotes, we will add them) (default: '')
   If the importOptions object is omitted entirely, all defaults will be assumed.
 - filepath [string]: The path of the file that will be added to the database. Note that this import module only handles delimited text files, no binaries.
 - schemaname [string]: The name of the [schema](https://www.monetdb.org/Documentation/SQLreference/Schema) to which the file table will be added. Note that importing will fail if the schema does not exist. (default: sys).
@@ -116,7 +118,18 @@ This method allows you to use this module in an interactive way (see [interactiv
 This method does the actual import process.
 
 - sniffResult [object]: If this argument is not provided, the import method collects the sniff data itself by doing an internal call to [Importer.sniff](#sniff). If you do provide this argument, it should be an object as it results from a call to [Importer.sniff](#sniff), i.e. it must follow the format for the [csv-sniffer sniffresult](https://www.npmjs.org/package/csv-sniffer#sniffresult).
-- fn [function]: This callback function gets called when the import completes. If import failed, an error message will be provided as the first argument. On success, this argument will be set to null. If this argument is omitted or set to null, no one will be notified when the import completes.
+- fn [function]: This callback function gets called when the import completes. 
+If import failed, an error message will be provided as the first argument. 
+On success, the first argument will be null. 
+The contents of the second argument depend on whether or not 'best effort' mode was used during import
+(see [bestEffort](bestEffort) for more information about 'best effort' mode.
+If 'best effort' mode is used, the second argument will be an array with all rows that failed to import, 
+with an object for every row, with the following structure:
+    - rowid [integer]: The number of the rejected row
+    - fldid [integer]: The number of the field of the rejected row
+    - message [string]: A message describing the reason of the reject
+    - input [string]: The input row that failed
+If 'best effort' mode is not used, the second argument will be always undefined.
 
 
 #### <a name="prepareLabels"></a>Importer.prepareLabels(sniffResult, [options]):
@@ -142,6 +155,15 @@ The function performs the following operations:
 ### Advanced configuration
 The default configuration will in most cases be sufficient. If it is not, you can use the following methods to have full control over the import process.
 
+#### <a name="bestEffort"></a>Importer.bestEffort(b):
+
+This function allows you to use the (experimental) 'best effort' mode of the MonetDB COPY INTO command.
+This mode imports as many rows as it can from your file, without failing when it enounters rows that it can not insert.
+
+This feature is set to false by default, but with this function you can enable it.
+If enabled, rows that failed to load into the database will be provided to the callback function of the [import](Import) function.
+
+- b [boolean]: Boolean that sets or unsets 'best effort' mode.
 
 #### <a name="setLabelFn"></a>Importer.setLabelFn(fn):
 
