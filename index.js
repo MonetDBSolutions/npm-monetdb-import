@@ -2,6 +2,8 @@ var fs = require("fs");
 
 var q = require("q");
 var csvParse = require("csv-parse");
+var fileExists = require("file-exists");
+var isBinary = require("isbinaryfile");
 var MonetDB = require("monetdb");
 var CSVSniffer = require("csv-sniffer")();
 
@@ -57,6 +59,14 @@ module.exports = function() {
             delimiters = tablename;
             tablename = schemaname;
             schemaname = "sys";
+        }
+
+        if(!fileExists(filepath)) {
+            throw new Error("File '" + filepath + "' could not be found. Please check the path and try again.");
+        }
+
+        if(isBinary.sync(filepath)) {
+            throw new Error("File '" + filepath + "' appears to be binary. We can only deal with regular text files.");
         }
 
         __typeCheck("object", dbOptions);

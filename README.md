@@ -35,15 +35,23 @@ var dbOptions = {
 	dbname: 'demo'
 }
 
-var imp = new Importer(dbOptions, '/path/to/my/file', 'fancy_table_name');
+try {
+	var imp = new Importer(dbOptions, '/path/to/my/file', 'fancy_table_name');
 
-imp.import(function(err) {
-	if(err) {
-		console.log('Could not import file /path/to/my/file; Reason: '+err);
-	}
+	imp.import(function(err) {
+		if(err) {
+			console.log('Could not import file /path/to/my/file; Reason: '+err);
+		}
 
-	console.log('File /path/to/my/file successfully imported into database table fancy_table_name');
-});
+		console.log('File /path/to/my/file successfully imported into database table fancy_table_name');
+	});
+} catch(e) {
+	// Could not construct the importer object. Possible reasons: 
+	// 1) Invalid parameters
+	// 2) file not found 
+	// 3) file is binary
+	console.log(e.message);
+}
 
 ```
 
@@ -91,7 +99,7 @@ imp.sniff(sniffOptions, function(err, sniffResult) {
 # API
 
 #### <a name="importer"></a>Importer(dbOptions, [importOptions], filepath, [schemaname], tablename, [delimiters])
-Constructor for an Importer object. 
+Constructor for an Importer object. The constructor will throw an error when it fails to construct. This can be due to e.g. invalid parameters, a non-existing file, or a quick check turned out that the given file is binary.
 
 - dbOptions [object]: In case you already have a database connection object in your code, you can add a property 'conn' to dbOptions (i.e. dbOptions = {conn: yourConnectionObject}). If the 'conn' property is found, all other properties will be ignored and we will assume the value of the 'conn' property is a valid, opened, MonetDBConnection object. In case this connection is not yet provided with a [q](https://www.npmjs.org/package/q) instance, we will do this for you.
 In case the 'conn' property is missing, we will instantiate a MonetDBConnection object ourselves and we expect the dbOptions object to contain the properties needed to do so. These properties are given on the module page of the [monetdb module](https://www.npmjs.org/package/monetdb#connect).

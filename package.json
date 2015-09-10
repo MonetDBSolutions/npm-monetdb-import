@@ -1,8 +1,20 @@
 {
   "name": "monetdb-import",
-  "version": "0.2.2",
-  "description": "MonetDB data import made easy and interactive.",
+  "version": "0.2.3",
+  "description": "MonetDB automated data import for NodeJS",
   "main": "index.js",
+  "dependencies": {
+    "csv-parse": "^1.0.0",
+    "csv-sniffer": "^0.0.4",
+    "file-exists": "^0.1.1",
+    "isbinaryfile": "^3.0.0",
+    "monetdb": "^0.2.8",
+    "q": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MonetDB/npm-monetdb-import.git"
@@ -13,43 +25,10 @@
     "import",
     "csv"
   ],
-  "author": {
-    "name": "R. Cijvat",
-    "email": "robin.cijvat@monetdbsolutions.com"
-  },
+  "author": "Robin Cijvat <robin.cijvat@monetdbsolutions.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/MonetDB/npm-monetdb-import/issues"
   },
-  "dependencies": {
-    "csv-parse": "^1.0.0",
-    "csv-sniffer": "latest",
-    "monetdb": "~0.2.1",
-    "q": "~1.0.1"
-  },
-  "gitHead": "5c210d3c2cb115acb0938706e58368bd6f4fc1e7",
-  "homepage": "https://github.com/MonetDB/npm-monetdb-import#readme",
-  "_id": "monetdb-import@0.1.2",
-  "scripts": {},
-  "_shasum": "e0a223573dd4b181e5ba1e9460ddc1691a32c2b2",
-  "_from": "monetdb-import@latest",
-  "_npmVersion": "2.12.0",
-  "_nodeVersion": "0.10.25",
-  "_npmUser": {
-    "name": "rcijvat",
-    "email": "robin.cijvat@monetdbsolutions.com"
-  },
-  "dist": {
-    "shasum": "0e0adcbfe6fa9375582d744385d527d82db3801a",
-    "tarball": "http://registry.npmjs.org/monetdb-import/-/monetdb-import-0.1.1.tgz"
-  },
-  "maintainers": [
-    {
-      "name": "rcijvat",
-      "email": "rcijvat@gmail.com"
-    }
-  ],
-  "directories": {},
-  "_resolved": "https://registry.npmjs.org/monetdb-import/-/monetdb-import-0.1.1.tgz",
-  "readme": "ERROR: No README data found!"
+  "homepage": "https://github.com/MonetDB/npm-monetdb-import#readme"
 }
