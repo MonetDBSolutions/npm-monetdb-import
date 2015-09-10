@@ -1,6 +1,6 @@
 {
   "name": "monetdb-import",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "MonetDB automated data import for NodeJS",
   "main": "index.js",
   "dependencies": {
@@ -9,11 +9,12 @@
     "file-exists": "^0.1.1",
     "isbinaryfile": "^3.0.0",
     "monetdb": "^0.2.8",
-    "q": "^1.0.1"
+    "q": "^1.0.1",
+    "should": "^7.1.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"No test case yet\""
+    "test": "mocha Tests"
   },
   "repository": {
     "type": "git",
