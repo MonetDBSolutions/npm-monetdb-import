@@ -4,7 +4,7 @@ var q = require("q");
 var csvParse = require("csv-parse");
 var fileExists = require("file-exists");
 var isBinary = require("isbinaryfile");
-var MonetDB = require("monetdb");
+var MonetDB = require("monetdb")();
 var CSVSniffer = require("csv-sniffer")();
 
 // Private functions that are not tied to the Importer object and thus do not use the this keyword
@@ -93,7 +93,7 @@ module.exports = function() {
         // private functions
         function _query(query) {
             _sqlLogFn && _sqlLogFn(query);
-            return _conn.queryQ(query);
+            return _conn.query(query);
         }
 
         function _getSample() {
@@ -314,14 +314,10 @@ module.exports = function() {
             _conn = dbOptions.conn;
         } else {
             _closeConn = true; // indicate that the connection should be closed afterwards
-            _conn = MonetDB.connect(dbOptions, function(err) {
-                if(err) {
-                    throw new Error("Could not create a connection to the database: "+err);
-                }
+            _conn = new MonetDB(dbOptions);
+            _conn.connect().fail(function(err) {
+                throw new Error("Could not create a connection to the database: "+err);
             });
-        }
-        if(!_conn.options.q) {
-            _conn.options.q = q;
         }
 
         // initialize default options
