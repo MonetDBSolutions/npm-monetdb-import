@@ -16,8 +16,8 @@ npm install [-g] monetdb-import
 # Dependencies
 This module depends on the following modules:
 - [monetdb](https://www.npmjs.org/package/monetdb): Necessary for creating a connection to a [MonetDB](https://www.monetdb.org) server process
-- [q](https://www.npmjs.org/package/q): The flow of callbacks can get quite complex inside this module, so therefore we chose to use q functionality inside our code to make for a clear programming style.
 - [csv-sniffer](https://www.npmjs.org/package/csv-sniffer): Necessary for auto detection of crucial file information that we need to import files into [MonetDB](https://www.monetdb.org).
+- [q](https://www.npmjs.org/package/q): To write clean code.
 
 # Usage
 Basically, you can use two approaches in using the **monetdb-import** module.
@@ -101,7 +101,7 @@ imp.sniff(sniffOptions, function(err, sniffResult) {
 #### <a name="importer"></a>Importer(dbOptions, [importOptions], filepath, [schemaname], tablename, [delimiters])
 Constructor for an Importer object. The constructor will throw an error when it fails to construct. This can be due to e.g. invalid parameters, a non-existing file, or a quick check turned out that the given file is binary.
 
-- dbOptions [object]: In case you already have a database connection object in your code, you can add a property 'conn' to dbOptions (i.e. dbOptions = {conn: yourConnectionObject}). If the 'conn' property is found, all other properties will be ignored and we will assume the value of the 'conn' property is a valid, opened, MonetDBConnection object. In case this connection is not yet provided with a [q](https://www.npmjs.org/package/q) instance, we will do this for you.
+- dbOptions [object]: In case you already have a database connection object in your code, you can add a property 'conn' to dbOptions (i.e. dbOptions = {conn: yourConnectionObject}). If the 'conn' property is found, all other properties will be ignored and we will assume the value of the 'conn' property is a valid, opened, MonetDBConnection object.
 In case the 'conn' property is missing, we will instantiate a MonetDBConnection object ourselves and we expect the dbOptions object to contain the properties needed to do so. These properties are given on the module page of the [monetdb module](https://www.npmjs.org/package/monetdb#connect).
 - importOptions [object]: Optional object containing the following optional properties:
 	- sampleSize [integer]: The maximum number of bytes to read from the import file for the sniffing process. If it is set to <= 0, the whole file contents will be read and fed to the sniffer. This might not be what you want for big files, since the sniffing process can be quite memory intensive. (default: 0 (so by default reads your entire file)).
