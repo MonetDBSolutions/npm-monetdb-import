@@ -28,7 +28,7 @@ Basically, you can use two approaches in using the **monetdb-import** module.
 
 ### Simple example
 This example demonstrates the easiest possible use of this module. It passes database connection details, a file to import, and a table name that will be created to the Importer constructor. The import process is then started by calling the import method, which calls a callback on completion.
-```
+```javascript
 var Importer = require('monetdb-import')();
 
 var dbOptions = {
@@ -58,7 +58,7 @@ try {
 ### <a name="interactive"></a>Interactive example
 This example demonstrates how you can interactively add a file to the database. The Importer object can be constructed in the same way as in the previous example, but instead of immediately calling import, you can call a sniffing function iteratively, until you are happy with its result and then pass this result to the import function to finish the import process.
 
-```
+```javascript
 var Importer = require('monetdb-import')();
 
 var dbOptions = {
@@ -101,8 +101,8 @@ imp.sniff(sniffOptions, function(err, sniffResult) {
 #### <a name="importer"></a>Importer(dbOptions, [importOptions], filepath, [schemaname], tablename, [delimiters])
 Constructor for an Importer object. The constructor will throw an error when it fails to construct. This can be due to e.g. invalid parameters, a non-existing file, or a quick check turned out that the given file is binary.
 
-- dbOptions [object]: In case you already have a database connection object in your code, you can add a property 'conn' to dbOptions (i.e. dbOptions = {conn: yourConnectionObject}). If the 'conn' property is found, all other properties will be ignored and we will assume the value of the 'conn' property is a valid, opened, MonetDBConnection object.
-In case the 'conn' property is missing, we will instantiate a MonetDBConnection object ourselves and we expect the dbOptions object to contain the properties needed to do so. These properties are given on the module page of the [monetdb module](https://www.npmjs.org/package/monetdb#connect).
+- dbOptions [object]: In case you already have either a [MonetDBConnection object](https://github.com/MonetDB/monetdb-nodejs#mdbconnection) or a [MonetDBPool object](https://github.com/MonetDB/monetdb-pool-nodejs) in your code, you can add a property 'conn' to dbOptions (i.e. dbOptions = {conn: yourConnectionObject}). If the 'conn' property is found (and is a valid MonetDBConnection or MonetDBPool object), all other properties will be ignored.
+In case the 'conn' property is missing, we will instantiate a MonetDBConnection object ourselves and we expect the dbOptions object to contain the properties needed to do so. These properties are given on the module page of the [monetdb module](https://www.npmjs.org/package/monetdb).
 - importOptions [object]: Optional object containing the following optional properties:
 	- sampleSize [integer]: The maximum number of bytes to read from the import file for the sniffing process. If it is set to <= 0, the whole file contents will be read and fed to the sniffer. This might not be what you want for big files, since the sniffing process can be quite memory intensive. (default: 0 (so by default reads your entire file)).
 	- locked [boolean]: If set to true, the LOCKED keyword will be added to the [COPY INTO statement](https://www.monetdb.org/Documentation/Manuals/SQLreference/CopyInto) (default: true).
@@ -190,7 +190,7 @@ function labelFn(i) {
 #### <a name="setLabelTransformFn"></a>Importer.setLabelTransformFn(fn):
 - fn [function]: Function that is called to make column labels database-ready. This function will only be called when column labels are taken directly from the first row of your file (otherwise, the [Importer.setLabelFn](#setLabelFn) will be called to generate labels). The following default function is used if you do not provide your own function:
 
-```
+```javascript
 function labelTransformFn(label) {
 	return label.toLowerCase()
 			.replace(/\s/g, "_")
@@ -208,8 +208,8 @@ function labelTransformFn(label) {
 
 
 # Q Integration
-For those of you who would like to interface with the monetdb-import module through using promises: we did you a solid. The asynchronous methods in the Importer object ([Importer.sniff](#sniff) and [Importer.import](#import)) have promise-returning variants: Importer.sniffQ and Importer.importQ.
+For those of you who would like to interface with the monetdb-import module through using promises: The asynchronous methods in the Importer object ([Importer.sniff](#sniff) and [Importer.import](#import)) have promise-returning variants: Importer.sniffQ and Importer.importQ.
 
 
 
-### Using this module should be a summer breeze. Don't agree? Please report any suggestions/bugs to robin.cijvat@monetdbsolutions.com
+### Using this module should be a breeze. Don't agree? Please report any suggestions/bugs to robin.cijvat@monetdbsolutions.com

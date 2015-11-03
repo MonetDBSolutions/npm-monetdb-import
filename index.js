@@ -310,13 +310,14 @@ module.exports = function() {
 
 
         // initialize database connection
-        if(dbOptions.conn) {
+        if(dbOptions.conn && (dbOptions.conn instanceof MonetDBConnection || dbOptions.conn instanceof MonetDBPool)) {
             _conn = dbOptions.conn;
         } else {
+            delete dbOptions.conn;
             _closeConn = true; // indicate that the connection should be closed afterwards
             _conn = new MonetDB(dbOptions);
             _conn.connect().fail(function(err) {
-                throw new Error("Could not create a connection to the database: "+err);
+                _sqlLogFn(err);
             });
         }
 
