@@ -12,7 +12,7 @@
     "q": "^1.0.1"
   },
   "devDependencies": {
-    "mocha": "latest",
+    "mocha": "^2.3.3",
     "should": "^7.1.0"
   },
   "scripts": {

@@ -1,7 +1,7 @@
 var should = require("should");
 var Importer = require("../index.js")();
 
-var dbOptions = {};
+var dbOptions = {dbname: 'whatever'};
 var tablename = "importedfile";
 
 describe("Importer#Importer", function() {
