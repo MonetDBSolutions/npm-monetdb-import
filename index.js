@@ -310,7 +310,7 @@ module.exports = function() {
 
 
         // initialize database connection
-        if(dbOptions.conn && (dbOptions.conn instanceof MonetDBConnection || dbOptions.conn instanceof MonetDBPool)) {
+        if(dbOptions.conn && dbOptions.connect && dbOptions.conn.query && dbOptions.conn.close) {
             _conn = dbOptions.conn;
         } else {
             delete dbOptions.conn;
