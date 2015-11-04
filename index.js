@@ -93,7 +93,7 @@ module.exports = function() {
         // private functions
         function _query(query) {
             _sqlLogFn && _sqlLogFn(query);
-            return _conn.query(query);
+            return _conn.query(query, false);
         }
 
         function _getSample() {
@@ -310,7 +310,7 @@ module.exports = function() {
 
 
         // initialize database connection
-        if(dbOptions.conn && dbOptions.connect && dbOptions.conn.query && dbOptions.conn.close) {
+        if(dbOptions.conn && dbOptions.conn.query) {
             _conn = dbOptions.conn;
         } else {
             delete dbOptions.conn;

@@ -1,6 +1,6 @@
 {
   "name": "monetdb-import",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "MonetDB automated data import for NodeJS",
   "main": "index.js",
   "dependencies": {
