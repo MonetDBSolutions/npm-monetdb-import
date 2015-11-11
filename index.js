@@ -248,7 +248,7 @@ module.exports = function() {
                     if(sniffResult.newlineStr) {
                         delimiterStr += ", '"+sniffResult.newlineStr.replace("\r", "\\r").replace("\n", "\\n")+"'";
                         if(sniffResult.quoteChar) {
-                            delimiterStr += ", '"+sniffResult.quoteChar+"'";
+                            delimiterStr += ", '"+sniffResult.quoteChar.replace("'", "\\'")+"'";
                         }
                     }
                 }
