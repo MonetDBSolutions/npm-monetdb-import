@@ -1,11 +1,11 @@
 {
   "name": "monetdb-import",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "MonetDB automated data import for NodeJS",
   "main": "index.js",
   "dependencies": {
     "csv-parse": "^1.0.0",
-    "csv-sniffer": "^0.0.4",
+    "csv-sniffer": "^0.1.0",
     "file-exists": "^0.1.1",
     "isbinaryfile": "^3.0.0",
     "monetdb": "^1.0.5",
