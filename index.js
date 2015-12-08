@@ -263,7 +263,9 @@ module.exports = function() {
                 }
                 var lockedStr = _importOptions.locked ? " LOCKED" : "";
                 var bestEffortStr = _bestEffort ? " BEST EFFORT" : "";
+
                 return _query( // Note: nrLines >= actual nr of records in input, but this is ok since MonetDB only expects an upper bound.
+                    "CALL sys.clearrejects();\n"+
                     "COPY "+nrLines+" OFFSET "+offset+" RECORDS \n"+
                     "INTO "+_getTablename()+" \n"+
                     "FROM ('"+_filepath+"') \n"+
@@ -307,7 +309,6 @@ module.exports = function() {
                 _query("DROP TABLE "+_getTablename());
                 fn && fn("Import failed. Reason: "+err);
             }).fin(function() {
-                _query("CALL sys.clearrejects()");
                 if(_closeConn) {
                     _conn.close();
                 }
