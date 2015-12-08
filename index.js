@@ -289,7 +289,7 @@ module.exports = function() {
                 if(rejects) result.rejects = rejects;
                 // Attach counts as well, but do not fail the import if any of these fails
                 return Q.allSettled([
-                    _query("SELECT COUNT(*) FROM sys.rejects"),
+                    _query("SELECT COUNT(DISTINCT rowid) FROM sys.rejects"),
                     _query("SELECT COUNT(*) FROM " + _getTablename())
                 ]).then(function(d) {
                     result.rejectedRows = d[0].state === "fulfilled" ? d[0].value.data[0][0] : -1;
@@ -302,7 +302,6 @@ module.exports = function() {
                     return result;
                 });
             }).then(function(result) {
-                console.log(JSON.stringify(result, null, "\t"));
                 fn && fn(null, result);
             }, function(err) {
                 _query("DROP TABLE "+_getTablename());
