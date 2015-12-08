@@ -1,6 +1,6 @@
 var fs = require("fs");
 
-var q = require("q");
+var Q = require("q");
 var csvParse = require("csv-parse");
 var fileExists = require("file-exists");
 var isBinary = require("isbinaryfile");
@@ -98,16 +98,16 @@ module.exports = function() {
 
         function _getSample() {
             if(_sample) {
-                return q.when(_sample);
+                return Q.when(_sample);
             }
-            return q.nfcall(fs.stat, _filepath).then(function(stat) {
-                return q.nfcall(fs.open, _filepath, "r").then(function(fd) {
+            return Q.nfcall(fs.stat, _filepath).then(function(stat) {
+                return Q.nfcall(fs.open, _filepath, "r").then(function(fd) {
                     var bytesToRead = stat.size;
                     if(_importOptions.sampleSize > 0 && _importOptions.sampleSize < stat.size) {
                         bytesToRead = _importOptions.sampleSize;
                     }
                     var buf = new Buffer(bytesToRead);
-                    return q.nfcall(fs.read, fd, buf, 0, bytesToRead, 0).then(function(bytesRead) {
+                    return Q.nfcall(fs.read, fd, buf, 0, bytesToRead, 0).then(function(bytesRead) {
                         _sample = buf.toString();
                         return _sample;
                     });
@@ -171,9 +171,11 @@ module.exports = function() {
             });
 
             var nrLines; // will be filled in on promise resolve
+            var nrCols;
+            var types = []; // contains the newly computed types while walking over the entire file
 
-            q.spread([
-                q.when(sniffResult),
+            Q.spread([
+                Q.when(sniffResult),
                 databaseCheckPromise
             ], function(sniffR) {
                 sniffResult = sniffR; //Store globally so we don't have to pass it on to next promises
@@ -181,8 +183,9 @@ module.exports = function() {
                 // We have to walk through the entire file to figure out:
                 // 1) Number of lines in the file, so we have an upper bound to give to the copy into statement
                 // 2) Most occurring number of columns
-                var nrColsP = q.defer();
-                var nrCols = []; // e.g: [15: 60, 16: 1029, 17: 99, 18: 1, 99: 1] -> we would choose 16
+                // 3) Actual column types (csv-sniffer is based on a sample of the file)
+                var deferred = Q.defer();
+                var nrColsDict = []; // e.g: [15: 60, 16: 1029, 17: 99, 18: 1, 99: 1] -> we would choose 16
                 var parseOptions = {
                     delimiter: sniffResult.delimiter,
                     rowDelimiter: sniffResult.newlineStr,
@@ -197,32 +200,38 @@ module.exports = function() {
                     var record;
                     var l;
                     while (record = csvParser.read()) {
+                        // Update nrColsDict
                         l = record.length;
-                        if (nrCols[l] === undefined) nrCols[l] = 1;
-                        else nrCols[l]++;
+                        if (nrColsDict[l] === undefined) nrColsDict[l] = 1;
+                        else nrColsDict[l]++;
+
+                        // Update types dict
+                        record && record.forEach(function(val, i) {
+                            types[i] = _sniffer.getAccumulatedType(val, types[i]);
+                        });
                     }
                 });
 
                 csvParser.on("error", function (err) {
-                    nrColsP.reject(err.message);
+                    deferred.reject(err.message);
                 });
 
                 csvParser.on("finish", function () {
                     var maxNrCols = -1;
-                    var chosenNrCols = -1;
-                    nrCols.forEach(function (n, i) {
+                    nrCols = -1;
+                    nrColsDict.forEach(function (n, i) {
                         if (n && n > maxNrCols) {
                             maxNrCols = n;
-                            chosenNrCols = i;
+                            nrCols = i;
                         }
                     });
                     nrLines = csvParser.lines;
-                    nrColsP.resolve(chosenNrCols);
+                    deferred.resolve();
                 });
 
                 fs.createReadStream(_filepath).pipe(csvParser);
-                return nrColsP.promise;
-            }).then(function(nrCols) {
+                return deferred.promise;
+            }).then(function() {
                 // Make sure we have the right amount of labels, and that the labels are valid (in case they came from the outside)
                 Importer.prepareLabels(sniffResult, {labelFn: _labelFn, labelTransformFn: _labelTransformFn, nrCols: nrCols});
 
@@ -233,7 +242,7 @@ module.exports = function() {
                 return _query(
                     "CREATE TABLE "+_getTablename()+" ("+
                         labelsQuoted.map(function(col, i) {
-                            return col+" "+__typeToDbType(sniffResult.types[i]);
+                            return col+" "+__typeToDbType(types[i]);
                         }).join(",\n")+
                     ")"
                 ).fail(function(err) {
@@ -264,7 +273,8 @@ module.exports = function() {
                 if(!_bestEffort) return;
                 // import succeeded and best effort used;
                 // get the reject result, but do not fail when something fails, instead return no rejects
-                return _query("SELECT * FROM sys.rejects").then(function (result) {
+                var rejectsLimit = parseInt(_importOptions.rejectsLimit);
+                return _query("SELECT * FROM sys.rejects LIMIT " + (rejectsLimit > 0 ? rejectsLimit : 100)).then(function (result) {
                     return result.data.map(function (row) {
                         return row.reduce(function (o, v, i) {
                             o[result.structure[i].column] = v;
@@ -273,15 +283,32 @@ module.exports = function() {
                     });
                 }, function () {
                     return [];
-                }).fin(function() {
-                    _query("CALL sys.clearrejects()");
                 });
             }).then(function(rejects) {
-                fn && fn(null, rejects);
+                var result = {};
+                if(rejects) result.rejects = rejects;
+                // Attach counts as well, but do not fail the import if any of these fails
+                return Q.allSettled([
+                    _query("SELECT COUNT(*) FROM sys.rejects"),
+                    _query("SELECT COUNT(*) FROM " + _getTablename())
+                ]).then(function(d) {
+                    result.rejectedRows = d[0].state === "fulfilled" ? d[0].value.data[0][0] : -1;
+                    result.importedRows = d[1].state === "fulfilled" ? d[1].value.data[0][0] : -1;
+
+                    // However, if importedRows count is zero, we should consider this import failed..
+                    if(result.importedRows == 0) {
+                        throw new Error("All of the rows in your file failed to import");
+                    }
+                    return result;
+                });
+            }).then(function(result) {
+                console.log(JSON.stringify(result, null, "\t"));
+                fn && fn(null, result);
             }, function(err) {
                 _query("DROP TABLE "+_getTablename());
                 fn && fn("Import failed. Reason: "+err);
             }).fin(function() {
+                _query("CALL sys.clearrejects()");
                 if(_closeConn) {
                     _conn.close();
                 }
@@ -397,7 +424,7 @@ module.exports = function() {
     ["sniff", "import"].forEach(function(funToQ) {
         var funQ = funToQ + 'Q';
         Importer.prototype[funQ] = function() {
-            return q.npost(this, funToQ, arguments);
+            return Q.npost(this, funToQ, arguments);
         }
     });
 

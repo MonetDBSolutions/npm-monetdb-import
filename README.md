@@ -107,6 +107,7 @@ In case the 'conn' property is missing, we will instantiate a MonetDBConnection 
 	- sampleSize [integer]: The maximum number of bytes to read from the import file for the sniffing process. If it is set to <= 0, the whole file contents will be read and fed to the sniffer. This might not be what you want for big files, since the sniffing process can be quite memory intensive. (default: 0 (so by default reads your entire file)).
 	- locked [boolean]: If set to true, the LOCKED keyword will be added to the [COPY INTO statement](https://www.monetdb.org/Documentation/Manuals/SQLreference/CopyInto) (default: true).
     - nullString [string]: If a value is found in your file that equals this string, it is considered as NULL. (Note that you should omit single quotes, we will add them) (default: '')
+    - rejectsLimit [int]: Optional limit for the size of the rejects table that will be returned. Defaults to 100.
   If the importOptions object is omitted entirely, all defaults will be assumed.
 - filepath [string]: The path of the file that will be added to the database. Note that this import module only handles delimited text files, no binaries.
 - schemaname [string]: The name of the [schema](https://www.monetdb.org/Documentation/SQLreference/Schema) to which the file table will be added. Note that importing will fail if the schema does not exist. (default: sys).
@@ -126,18 +127,18 @@ This method allows you to use this module in an interactive way (see [interactiv
 This method does the actual import process.
 
 - sniffResult [object]: If this argument is not provided, the import method collects the sniff data itself by doing an internal call to [Importer.sniff](#sniff). If you do provide this argument, it should be an object as it results from a call to [Importer.sniff](#sniff), i.e. it must follow the format for the [csv-sniffer sniffresult](https://www.npmjs.org/package/csv-sniffer#sniffresult).
-- fn [function]: This callback function gets called when the import completes. 
-If import failed, an error message will be provided as the first argument. 
-On success, the first argument will be null. 
-The contents of the second argument depend on whether or not 'best effort' mode was used during import
-(see [bestEffort](bestEffort) for more information about 'best effort' mode.
-If 'best effort' mode is used, the second argument will be an array with all rows that failed to import, 
-with an object for every row, with the following structure:
-    - rowid [integer]: The number of the rejected row
-    - fldid [integer]: The number of the field of the rejected row
-    - message [string]: A message describing the reason of the reject
-    - input [string]: The input row that failed
-If 'best effort' mode is not used, the second argument will be always undefined.
+- fn [function]: This callback function gets called when the import completes, with the following two arguments:
+1. An error message will be provided here when import failed, null otherwise. 
+2. The second argument is an object with the following properties:
+    - importedRows [int]: The number of rows imported into MonetDB, or -1 when unknown.
+    - rejectedRows [int]: The number of rows that could not be imported into MonetDB, or -1 when unknown.
+    - rejects: [array] This property is only set if the best effort mode was used during import (see [bestEffort](bestEffort) for more information about 'best effort' mode.
+      This array will contain an object for every import failure, with the following structure: 
+        - rowid [integer]: The number of the rejected row
+        - fldid [integer]: The number of the field of the rejected row
+        - message [string]: A message describing the reason of the reject
+        - input [string]: The input row that failed
+      The maximum number of array entries is determined by the rejectsLimit number in the importOptions provided to the [Importer object](#importer)
 
 
 #### <a name="prepareLabels"></a>Importer.prepareLabels(sniffResult, [options]):
