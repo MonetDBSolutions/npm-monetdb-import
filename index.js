@@ -371,6 +371,9 @@ module.exports = function() {
         if(!opts.labelTransformFn) {
             opts.labelTransformFn = __labelTransformFn;
         }
+
+        if (!sniffResult.labels) sniffResult.labels = [];
+
         var nrCols = 0;
         if(opts.nrCols === undefined) {
             if (sniffResult.records) {
@@ -387,7 +390,6 @@ module.exports = function() {
                     nrCols = Math.max(nrCols, parseInt(d));
                 });
             }
-            if (!sniffResult.labels) sniffResult.labels = [];
         } else {
             nrCols = parseInt(opts.nrCols);
             if(isNaN(nrCols)) nrCols = 0;
