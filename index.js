@@ -185,6 +185,7 @@ module.exports = function() {
                 // 2) Most occurring number of columns
                 // 3) Actual column types (csv-sniffer is based on a sample of the file)
                 var deferred = Q.defer();
+                var nrRecords = 0;
                 var nrColsDict = []; // e.g: [15: 60, 16: 1029, 17: 99, 18: 1, 99: 1] -> we would choose 16
                 var parseOptions = {
                     delimiter: sniffResult.delimiter,
@@ -200,12 +201,17 @@ module.exports = function() {
                     var record;
                     var l;
                     while (record = csvParser.read()) {
+                        if(nrRecords++ == 0 && sniffResult.hasHeader) {
+                            // skip first record, if it is a header according to the sniff result
+                            continue;
+                        }
                         // Update nrColsDict
                         l = record.length;
                         if (nrColsDict[l] === undefined) nrColsDict[l] = 1;
                         else nrColsDict[l]++;
 
                         // Update types dict
+
                         record && record.forEach(function(val, i) {
                             types[i] = _sniffer.getAccumulatedType(val, types[i]);
                         });
