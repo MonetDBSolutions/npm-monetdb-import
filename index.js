@@ -192,7 +192,9 @@ module.exports = function() {
                     rowDelimiter: sniffResult.newlineStr,
                     quote: sniffResult.quoteChar,
                     skipEmptyLines: true,
-                    trim: true
+                    trim: true,
+                    escape: "\\",
+                    relax: true
                 };
 
                 var csvParser = csvParse(parseOptions);
