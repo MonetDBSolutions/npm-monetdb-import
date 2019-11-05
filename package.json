@@ -4,7 +4,7 @@
   "description": "MonetDB automated data import for NodeJS",
   "main": "index.js",
   "dependencies": {
-    "csv-parse": "^1.0.0",
+    "csv-parse": "^4.6.5",
     "csv-sniffer": "^0.1.0",
     "file-exists": "^0.1.1",
     "isbinaryfile": "^3.0.0",
@@ -12,7 +12,7 @@
     "q": "^1.0.1"
   },
   "devDependencies": {
-    "mocha": "^2.3.3",
+    "mocha": "^6.2.2",
     "should": "^7.1.0"
   },
   "scripts": {
